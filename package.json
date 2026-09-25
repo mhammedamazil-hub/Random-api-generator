@@ -1,0 +1,15 @@
+{
+  "name": "keyshape",
+  "version": "1.0.0",
+  "description": "Keyshape — API key format catalog, synthetic fixture generator, format validator and entropy lab. Client-side only; never contacts provider APIs.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/core.test.mjs",
+    "icons": "node scripts/generate-icons.mjs"
+  },
+  "engines": {
+    "node": ">=19"
+  },
+  "license": "MIT"
+}

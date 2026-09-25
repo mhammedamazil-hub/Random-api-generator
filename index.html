@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Keyshape — API Key Format &amp; Entropy Lab</title>
+  <meta name="description" content="Offline-first toolkit: 57-provider API key format catalog, synthetic test-fixture generator, local format validator and brute-force entropy lab. Never contacts provider APIs.">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Keyshape">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="#generate">
+    <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true">
+      <rect width="64" height="64" rx="12" fill="#0f172a"/>
+      <circle cx="23" cy="32" r="10" fill="none" stroke="#38bdf8" stroke-width="6"/>
+      <rect x="30" y="29" width="24" height="6" fill="#38bdf8"/>
+      <rect x="41" y="35" width="5" height="9" fill="#38bdf8"/>
+      <rect x="49" y="35" width="5" height="12" fill="#38bdf8"/>
+      <circle cx="46" cy="17" r="3" fill="#7dd3fc"/>
+      <circle cx="54" cy="11" r="2" fill="#7dd3fc"/>
+    </svg>
+    <span class="brand-text">
+      <strong>Keyshape</strong>
+      <span>API key format &amp; entropy lab</span>
+    </span>
+  </a>
+  <nav class="nav" aria-label="Views">
+    <a href="#generate" data-view="generate">Generate</a>
+    <a href="#validate" data-view="validate">Validate</a>
+    <a href="#entropy" data-view="entropy">Entropy</a>
+    <a href="#install" data-view="install">Install &amp; About</a>
+  </nav>
+</header>
+
+<main>
+  <!-- ══════════════════ GENERATE ══════════════════ -->
+  <section id="view-generate" class="view" aria-labelledby="gen-title">
+    <h1 id="gen-title">Synthetic fixture generator</h1>
+    <p class="lede">Random strings in real providers’ key <em>formats</em> — for test fixtures, parser QA and secret-scanner rule testing. They are garbage that looks right, not credentials.</p>
+
+    <div class="notice" role="note">
+      <strong>Format-compatible only.</strong> Output is produced with <code>crypto.getRandomValues</code> and is never checked against real services — a synthetic key has exactly zero chance of being valid, and Keyshape has no code path that could ever “test” one.
+    </div>
+
+    <form class="card grid-form" id="gen-form">
+      <label class="field">
+        <span>Provider</span>
+        <select id="gen-provider"></select>
+      </label>
+      <label class="field" id="gen-prefix-wrap" hidden>
+        <span id="gen-prefix-label">Key type</span>
+        <select id="gen-prefix"></select>
+      </label>
+      <div class="field" id="gen-lengths-wrap" hidden>
+        <span>Segment lengths</span>
+        <div class="length-row" id="gen-lengths"></div>
+      </div>
+      <label class="field">
+        <span>Quantity</span>
+        <input id="gen-qty" type="number" min="1" max="10000" value="5" inputmode="numeric">
+      </label>
+      <label class="field">
+        <span>Format</span>
+        <select id="gen-format">
+          <option value="txt">TXT (one per line)</option>
+          <option value="csv">CSV (columns)</option>
+          <option value="json">JSON (fixtures array)</option>
+        </select>
+      </label>
+      <div class="field actions">
+        <span>&nbsp;</span>
+        <div class="btn-row">
+          <button type="submit" class="btn primary" id="gen-run">Generate</button>
+          <button type="button" class="btn" id="gen-copy">Copy</button>
+          <button type="button" class="btn" id="gen-download">Download</button>
+        </div>
+      </div>
+      <p class="field-note" id="gen-note"></p>
+    </form>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Output</h2>
+        <span class="muted" id="gen-meta"></span>
+      </div>
+      <pre class="output" id="gen-output" tabindex="0"><code>Configure the generator and press Generate.</code></pre>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Provider catalog</h2>
+        <span class="muted" id="cat-count"></span>
+      </div>
+      <div class="toolbar">
+        <input id="cat-search" type="search" placeholder="Search provider, prefix, category…" aria-label="Search catalog">
+        <select id="cat-filter" aria-label="Filter by category"></select>
+      </div>
+      <div class="table-wrap">
+        <table class="catalog" id="catalog-table">
+          <thead>
+            <tr><th>Provider</th><th class="col-cat">Category</th><th>Shape</th><th>Format entropy</th><th></th></tr>
+          </thead>
+          <tbody id="catalog-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ VALIDATE ══════════════════ -->
+  <section id="view-validate" class="view" aria-labelledby="val-title" hidden>
+    <h1 id="val-title">Format validator</h1>
+    <p class="lede">Paste any key-shaped strings — one per line. Keyshape recognizes which provider format each line <em>looks</em> like, entirely in your browser.</p>
+
+    <div class="notice" role="note">
+      <strong>Shape ≠ validity.</strong> This is lexical pattern matching only. Nothing is sent anywhere; there is no “is this key real?” check, by design. Use it to classify fixtures, review leaks, or sanity-check your own keys’ format.
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Input</h2>
+        <div class="btn-row">
+          <button type="button" class="btn" id="val-sample">Load sample fixtures</button>
+          <button type="button" class="btn" id="val-clear">Clear</button>
+        </div>
+      </div>
+      <textarea id="val-input" rows="6" spellcheck="false" placeholder="sk-…&#10;ghp_…&#10;AIza…"></textarea>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Detection</h2>
+        <span class="muted" id="val-summary"></span>
+      </div>
+      <div id="val-results" class="val-results" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- ══════════════════ ENTROPY ══════════════════ -->
+  <section id="view-entropy" class="view" aria-labelledby="ent-title" hidden>
+    <h1 id="ent-title">Entropy &amp; brute-force lab</h1>
+    <p class="lede">Why “just generate millions of keys and try them” cannot work — the arithmetic, per provider.</p>
+
+    <div class="card">
+      <h2>The math in four lines</h2>
+      <ul class="points">
+        <li>A key’s search space is <code>charset<sup>length</sup></code>. <strong>OpenAI</strong> ≈ 62<sup>48</sup> ≈ 2<sup>285</sup> — more candidates than atoms in the observable universe, squared.</li>
+        <li>Blind guessing needs ~half the keyspace <em>on average</em> for one hit. Even at <strong>10<sup>12</sup> probes/second</strong>, that’s ~10<sup>66</sup> years — the universe is 1.4 × 10<sup>10</sup> years old.</li>
+        <li>Real auth endpoints rate-limit and lock out after a handful of failures, so the <em>effective</em> rate is worse than any number below — and probing third-party auth with guessed credentials is illegal (CFAA/CMA and equivalents) and against every provider’s ToS.</li>
+        <li>Keys you hear about being “found” were <strong>leaked</strong> (repos, logs, screenshots) — not guessed. Protect against leaks: short lifetimes, scopes, rotation, secret scanning.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Expected search time per provider</h2>
+        <label class="inline">Probe rate
+          <select id="ent-rate">
+            <option value="1e3">10³ /s (typical rate limit)</option>
+            <option value="1e6">10⁶ /s</option>
+            <option value="1e9" selected>10⁹ /s</option>
+            <option value="1e12">10¹² /s (absurd, still hopeless)</option>
+          </select>
+        </label>
+      </div>
+      <div class="table-wrap">
+        <table class="catalog" id="entropy-table">
+          <thead>
+            <tr><th>Provider</th><th class="col-bits">Key bits</th><th class="col-ks">Keyspace</th><th id="ent-col-years">Expected years @ 10⁹/s</th><th>vs age of universe</th></tr>
+          </thead>
+          <tbody id="entropy-body"></tbody>
+        </table>
+      </div>
+      <p class="field-note">“Key bits” is pure format entropy (log<sub>2</sub> of the keyspace) — the floor for how unpredictable a well-generated real key is. Expected time assumes one perfect oracle and zero rate limiting; reality is slower by orders of magnitude.</p>
+    </div>
+  </section>
+
+  <!-- ══════════════════ INSTALL & ABOUT ══════════════════ -->
+  <section id="view-install" class="view" aria-labelledby="ins-title" hidden>
+    <h1 id="ins-title">Install &amp; about</h1>
+    <p class="lede">Keyshape is a Progressive Web App: installable, offline-capable, no account, no telemetry.</p>
+
+    <div class="card">
+      <h2>Install as an app</h2>
+      <div class="btn-row">
+        <button type="button" class="btn primary" id="btn-install" hidden>Install Keyshape</button>
+      </div>
+      <ol class="steps" id="install-steps">
+        <li><strong>Android / desktop Chrome &amp; Edge:</strong> use the install button above, or the install icon in the address bar.</li>
+        <li><strong>iPhone / iPad (Safari):</strong> Share → <em>Add to Home Screen</em>.</li>
+        <li><strong>Offline:</strong> after the first visit everything works with no network — the service worker caches the whole app.</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h2>What about an Android APK?</h2>
+      <p>The installed PWA <em>is</em> the app: standalone window, home-screen icon, offline. If you specifically need a store-style <code>.apk</code>, wrap this same build in a <a href="https://developer.chrome.com/docs/android/trusted-web-activity" rel="noopener">Trusted Web Activity</a> or Capacitor shell — the <code>README</code> documents the one-keystore flow. There is deliberately <strong>no background service</strong>: an app that quietly probes third-party auth endpoints is malware, and this project has nothing to probe — it never contacts provider APIs.</p>
+    </div>
+
+    <div class="card">
+      <h2>What this is — and what it is not</h2>
+      <ul class="points">
+        <li><strong>Is:</strong> a format catalog for 57 providers, a synthetic fixture generator, a local format validator, and an entropy calculator — for developers testing key handling, mock flows and secret-scanning rules.</li>
+        <li><strong>Isn’t:</strong> a key “finder”. Guessing credentials against real services to land a working key is account theft — illegal under computer-misuse law and against every listed provider’s terms — and the entropy tab shows it’s mathematically hopeless regardless.</li>
+        <li><strong>Privacy:</strong> 100% client-side. No analytics, no storage of your inputs, no network calls except static assets.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Custom provider</h2>
+      <p>Need a format that isn’t listed? The generator supports fully custom shapes (prefix · suffix · length · alphabet) — pick <em>Custom provider</em> at the top of the Generate tab.</p>
+      <p class="muted">Core logic is dependency-free ES modules with <code>npm test</code> unit coverage. MIT licensed.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <span>Keyshape — synthetic formats, honest math. Never contacts provider APIs.</span>
+  <span class="muted">MIT · Built for developers</span>
+</footer>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<noscript>
+  <div class="notice">Keyshape’s generator and validator are client-side JavaScript. Please enable JavaScript (or run <code>npm test</code> in the repo for the core library).</div>
+</noscript>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
